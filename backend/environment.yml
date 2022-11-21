@@ -1,0 +1,9 @@
+name: gpt-j
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - pytorch-cuda=11.7
+  - torchvision
+  - pytorch
+  - torchaudio
