@@ -1,0 +1,4 @@
+[submodule "transformers"]
+	path = transformers
+	url = https://github.com/152334H/transformers
+	branch = v4.24-release
