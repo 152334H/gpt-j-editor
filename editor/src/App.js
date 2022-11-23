@@ -189,4 +189,16 @@ const App = () => {
     There are currently too many users on this site. Waiting for access...
   </Typography>
 }
-export default App
+
+const PhoneUserCheck = () => {
+  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1224px)' })
+  const [override,setOverride] = useState()
+
+  return isTabletOrMobile && !override ? <Typography>
+    Mobile UI is currently under development.
+    Use at your own risk.
+    <Button onClick={()=>setOverride(true)}/>
+  </Typography> : <App/>
+}
+
+export default PhoneUserCheck
