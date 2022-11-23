@@ -97,6 +97,15 @@ const Editor = {
     return !!match
   },
 
+  fixVoidNodes(editor)  {
+    Transforms.setNodes(
+      editor, { isVoid: false }, {
+        at: [],
+        match: (node, path) => Text.isText(node),
+      }
+    )
+  },
+
   toggleBoldMark(editor) {
     const isActive = Editor.isBoldMarkActive(editor)
     Transforms.setNodes(

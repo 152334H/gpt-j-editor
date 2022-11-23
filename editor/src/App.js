@@ -2,7 +2,7 @@
 // Import React dependencies.
 import React, { useState, useCallback, useMemo, useEffect } from 'react'
 // Import the Slate editor factory.
-import { createEditor, Range } from 'slate'
+import { createEditor, Range, Node } from 'slate'
 // Import the Slate components and React plugin.
 import { Slate, Editable, withReact } from 'slate-react'
 //
@@ -12,7 +12,10 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import ListItem from '@mui/material/ListItem'
 import List from '@mui/material/List'
+import Fab from '@mui/material/Fab'
 
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import DoneIcon from '@mui/icons-material/Done';
 //
 import { useMediaQuery } from 'react-responsive'
 import { saveAs } from 'file-saver';
@@ -65,11 +68,42 @@ const Preamble = ({autopredict}) => {
   </Box>
 }
 
+const floatingStyle = {
+        margin: 0,
+        top: 'auto',
+        right: 20,
+        bottom: 20,
+        left: 'auto',
+        position: 'fixed',
+      }
+const PredictButton = ({generating, initCompletion, finishCompletion}) => {
+  return generating ?
+    <Fab
+      color='secondary' style={floatingStyle}
+      variant="extended"
+      onClick={finishCompletion}
+    >
+      <DoneIcon/>
+      Accept
+    </Fab> : <Fab
+      color='primary' style={floatingStyle} 
+      variant="extended" onClick={initCompletion}
+    >
+      <AutoFixHighIcon/>
+      Generate
+    </Fab>
+}
 const TextEditor = ({uid, disconnect}) => {
   const [editor] = useState(() => withReact(createEditor()))
+  const [generating, setGenerating] = useState(false)
   const [autopredict, setAutopredict] = useState({active: true, delay: 1500})
   const [ctx, setCtx] = useState({prior: 200, extend: 100})
   const [conf,setConf] = useState({temp: 0.8, top_p: 0.9, top_k: 6, p_alpha: 0.6, csearch: true})
+  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1224px)' })
+
+  useEffect(() => {
+    setAutopredict(ap => ({...ap, active:!isTabletOrMobile}))
+  }, [isTabletOrMobile])
 
   const debouncedQuit = useCallback(
     lodash.debounce(disconnect,900000),
@@ -101,10 +135,15 @@ const TextEditor = ({uid, disconnect}) => {
   const initCompletion = () => {
     const endPos = Object.assign({},Range.end(editor.selection))
     if (Editor.tryAddSuggestNodes(editor, endPos)) {
+      setGenerating(true)
       const prompt = Editor.lastNChars(editor, ctx.prior);
       Editor.repeatedlyExtendSuggestion(editor, prompt, uid, conf, ctx.extend)
     }
   }
+  const finishCompletion = useCallback(() => {
+    Editor.acceptSuggestText(editor)
+    setGenerating(false)
+  }, [editor])
   const initCompDebounced = autopredict.active ? lodash.debounce(initCompletion, autopredict.delay) : ()=>0
 
   return (<>
@@ -112,24 +151,9 @@ const TextEditor = ({uid, disconnect}) => {
     <PredictConfiguration
       conf={conf} setConf={setConf} ctx={ctx} setCtx={setCtx}
       setAutopredict={setAutopredict} autopredict={autopredict}
+      usingMobile={isTabletOrMobile}
     />
     <br/>
-    <div>
-      <Tooltip title='Exports to .txt'>
-        <Button variant='contained' onClick={() => saveTxt(localStorage.getItem('content'))}>
-          Export
-        </Button>
-      </Tooltip>
-      {/*
-      <Tooltip title="Press this if there's grey text is hanging around">
-        <Button variant='outlined' onClick={() =>
-            Editor.fixVoidNodes(editor)
-          }>
-          Fix dangling
-        </Button>
-      </Tooltip>
-      */}
-    </div>
     <hr/>
     <Slate
       editor={editor} value={initialValue}
@@ -164,7 +188,7 @@ const TextEditor = ({uid, disconnect}) => {
           debouncedQuit()
           if (e.key === 'Tab') {
             e.preventDefault();
-            Editor.acceptSuggestText(editor)
+            finishCompletion()
             return
           } else if (e.key === 'Escape') {
             return Editor.rmSuggestText(editor)
@@ -180,9 +204,33 @@ const TextEditor = ({uid, disconnect}) => {
             default: break
           }
         }}
-        
       />
     </Slate>
+    <hr/>
+    <div>
+      <Tooltip title='Exports to .txt'>
+        <Button variant='contained' onClick={() => saveTxt(localStorage.getItem('content'))}>
+          Export
+        </Button>
+      </Tooltip>
+      <Tooltip title="Press this if there's grey text is hanging around">
+        <Button variant='outlined' onClick={() => {
+          Editor.fixVoidNodes(editor)
+          window.location.reload()
+        }}>
+          Fix dangling
+        </Button>
+      </Tooltip>
+      <br/>
+      <br/>
+    </div>
+    {
+      autopredict.active ? <></> :
+        <PredictButton generating={generating}
+          initCompletion={initCompletion}
+          finishCompletion={finishCompletion}
+        />
+    }
   </>)
 }
 
@@ -250,6 +298,7 @@ const App = () => {
     : <Typography> {query.err} </Typography>
 }
 
+/*
 const PhoneUserCheck = () => {
   const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1224px)' })
   const [override,setOverride] = useState()
@@ -260,5 +309,6 @@ const PhoneUserCheck = () => {
     <Button onClick={()=>setOverride(true)}/>
   </Typography> : <App/>
 }
+*/
 
-export default PhoneUserCheck
+export default App

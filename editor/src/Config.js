@@ -70,8 +70,8 @@ const CtxConfigs = ({ctx, setCtx}) => (<Box>
   />
 </Box>)
 
-const APConfigs = ({ap, setAP}) => (<Box>
-  <FormControlLabel
+const APConfigs = ({ap, setAP, usingMobile}) => (<Box>
+  <FormControlLabel disabled={usingMobile}
     control={
       <Switch checked={ap.active} onChange={
         () => setAP({...ap, active: !ap.active})
@@ -85,7 +85,7 @@ const APConfigs = ({ap, setAP}) => (<Box>
   />
 </Box>)
 
-const PredictConfiguration = ({conf,setConf, ctx, setCtx, autopredict, setAutopredict}) => {
+const PredictConfiguration = ({conf,setConf, ctx, setCtx, autopredict, setAutopredict, usingMobile}) => {
   return <Accordion sx={{
     maxWidth: 500
   }} disableGutters>
@@ -98,7 +98,7 @@ const PredictConfiguration = ({conf,setConf, ctx, setCtx, autopredict, setAutopr
     </AccordionSummary>
     <AccordionDetails>
       <Divider>Auto-complete</Divider>
-      <APConfigs ap={autopredict} setAP={setAutopredict}/>
+      <APConfigs ap={autopredict} setAP={setAutopredict} usingMobile={usingMobile}/>
       <Divider sx={{ marginBottom: 1 }}>Tokens</Divider>
       <CtxConfigs ctx={ctx} setCtx={setCtx}/>
       <Divider>Model params</Divider>
