@@ -19,19 +19,25 @@ app = FastAPI()
 class ConnectionManager:
     MAX_CONNS = int(env.get('MAX_CONNS', '5')) # pyright: ignore
     def __init__(self):
-        self.clients = set()
+        self.clients = {}
+        self.IPs = set()
 
     def isFull(self):
         return len(self.clients) >= ConnectionManager.MAX_CONNS
 
-    def get_token(self):
+    def get_token(self, connIP: str):
+        # lmao TOCTOU bugs here
         if self.isFull(): return None
+        if connIP in self.IPs:
+            raise WebSocketException(1008, 'Too many sessions')
         uid = uuid4().hex
-        self.clients.add(uid)
+        self.clients[uid] = connIP
+        self.IPs.add(connIP)
         return uid
 
     def remove(self, uid: str):
-        self.clients.remove(uid)
+        self.IPs.remove(self.clients[uid])
+        del self.clients[uid]
 
 manager = ConnectionManager()
 
@@ -39,7 +45,11 @@ import asyncio
 @app.websocket('/register')
 async def connect(ws: WebSocket):
     await ws.accept()
-    token = manager.get_token()
+
+    if ws.client is None:
+        raise WebSocketException(1011, 'req.client was missing (???)')
+    host = ws.headers.get('cf-connecting-ip', ws.client.host)
+    token = manager.get_token(host)
     if token is None:
         raise WebSocketException(1012, 'Too many connections, sorry')
     print(f'register {token=}')
