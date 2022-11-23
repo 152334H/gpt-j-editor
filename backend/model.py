@@ -8,7 +8,6 @@ FINAL_STRING = dotenv_values().get('FINAL_STRING', '<|endoftext|>')
 FINAL_TOKENS = []
 
 def group(g: Generator[torch.Tensor,None,None], n: int):
-    print(g)
     g = iter(g)
     res = []
     i = 0
@@ -65,6 +64,8 @@ class CompletionRequest(BaseModel):
         return k
     @validator('chunks')
     def chunk(cls, c: int, values):
+        if not c:
+            raise ValueError('chunks was 0')
         if c > values['length']:
             raise ValueError('chunks was longer than length')
         return c
@@ -97,7 +98,6 @@ class LM:
         if preload: self.load()
 
     def predict_generator(self, req: CompletionRequest):
-        print(req.prompt)
         # convert to tokens
         input_ids = self.tokenizer(
             req.prompt, return_tensors="pt"
@@ -126,9 +126,7 @@ class LM:
 
         # yield token groups
         for token_group in group(gen, req.chunks):
-            print(token_group)
             merged = torch.cat(token_group)
-            print(merged)
             s = self.tokenizer.decode(merged)
             if (idx := s.find(FINAL_STRING)) != -1:
                 s = s[:idx]
@@ -136,10 +134,11 @@ class LM:
 
 
 class Dummy:
-    def _predict_generator_single(self, req: CompletionRequest):
+    def _predict_generator_single(self, _: CompletionRequest):
         for word in 'test message. This exists so that loading a full model during development is not necessary.'.split(' '):
             yield word+' '
     def predict_generator(self, req: CompletionRequest):
-        for token_group in group(self._predict_generator_single(req), req.chunks):
-            yield ''.join(token_group)
+        for token in self._predict_generator_single(req): yield token
+        #for token_group in group(self._predict_generator_single(req), req.chunks):
+        #   yield ''.join(token_group)
 
