@@ -6,6 +6,9 @@ from uuid import uuid4
 from websockets.exceptions import ConnectionClosed
 from dotenv import dotenv_values
 
+_old_print = print
+def print(*args,**kwargs): return _old_print(*args, flush=True, **kwargs)
+
 env = dotenv_values()
 MODEL_REPO = env.get('MODEL_REPO', 'EleutherAI/gpt-j-6B')
 assert isinstance(MODEL_REPO,str)
