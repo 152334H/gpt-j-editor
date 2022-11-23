@@ -1,22 +1,31 @@
 from typing import Optional, Generator
 from pydantic import BaseModel, validator
-from transformers import AutoTokenizer, GPTJForCausalLM
+from transformers import AutoTokenizer, GPTJForCausalLM, GPT2TokenizerFast
 from dotenv import dotenv_values
 import torch
 
 FINAL_STRING = dotenv_values().get('FINAL_STRING', '<|endoftext|>')
 FINAL_TOKENS = []
 
-def group(g: Generator[torch.Tensor,None,None], n: int):
+def group(g: Generator[torch.Tensor,None,None], n: int, tokenizer: GPT2TokenizerFast):
     g = iter(g)
     res = []
     i = 0
     while (v:=next(g,None)) is not None:
         res.append(v)
+
+        # grab entire of FINAL_STRING if needed
         if v == FINAL_TOKENS[i]:
             i = (i+1)%len(FINAL_TOKENS)
             continue
         i = 0
+
+        # do not return until ascii
+        s = tokenizer.convert_ids_to_tokens(int(v.item()))
+        assert isinstance(s,str)
+        if not s.isascii(): continue
+
+        # return if length >= chunk size
         if len(res) >= n:
             yield res
             res = []
@@ -126,7 +135,7 @@ class LM:
             gen = (t for t in gen[0,len(input_ids):,None])
 
         # yield token groups
-        for token_group in group(gen, req.chunks):
+        for token_group in group(gen, req.chunks, self.tokenizer): # pyright: ignore
             merged = torch.cat(token_group)
             s = self.tokenizer.decode(merged)
             if (idx := s.find(FINAL_STRING)) != -1:
