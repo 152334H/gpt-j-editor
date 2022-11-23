@@ -52,6 +52,7 @@ async def connect(ws: WebSocket):
     token = manager.get_token(host)
     if token is None:
         raise WebSocketException(1012, 'Too many connections, sorry')
+
     print(f'register {token=}')
     try:
         await ws.send_text(token)
@@ -85,9 +86,9 @@ async def websocket_endpoint(ws: WebSocket, uid: str):
             
             gen = m.predict_generator(req)
             # this for-loop can be interrupted by the client running ws.close().
-            for text in gen:
+            for text,token_count in gen:
                 await ws.send_text(text)
-                await asyncio.sleep(req.chunks/4)
+                await asyncio.sleep(token_count/4)
                 print(f'sent {text=}')
         else: await ws.send_text("Invalid command: "+cmd)
         await ws.close()

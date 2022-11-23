@@ -88,7 +88,7 @@ class LM:
             # TODO: pick between dtypes
             load_in_8bit=True,
             #torch_dtype='auto', # this will be float16 on default model
-        ).to(self.device)
+        ).to(self.device) # pyright: ignore
         self.model.eval()
     def unload(self):
         self.model = None
@@ -107,6 +107,7 @@ class LM:
         FINAL_TOKENS[:] = list(self.tokenizer(FINAL_STRING).input_ids)
         if preload: self.load()
 
+    @torch.no_grad()
     def predict_generator(self, req: CompletionRequest):
         # convert to tokens
         input_ids = self.tokenizer(
@@ -140,7 +141,7 @@ class LM:
             s = self.tokenizer.decode(merged)
             if (idx := s.find(FINAL_STRING)) != -1:
                 s = s[:idx]
-            yield s
+            yield s, merged.size()[0]
 
 
 class Dummy:
