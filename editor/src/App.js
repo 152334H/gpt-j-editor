@@ -27,9 +27,12 @@ import {WS_URL} from './gpt'
 const serialize = value => {
   return value.map(n => Node.string(n)).join('\n\n')
 }
-const saveTxt = json => {
-  saveAs(new Blob([serialize(json)], {type: "text/plain;charset=utf-8"}), 'gpt-j.txt')
-}
+const saveTxt = json => saveAs(
+  new Blob(
+    [serialize(JSON.parse(json))],
+    {type: "text/plain;charset=utf-8"}
+  ), 'gpt-j.txt'
+)
 
 const DotItem = props => {
   return <ListItem sx={{ display: 'list-item', paddingTop: 0 }}>
