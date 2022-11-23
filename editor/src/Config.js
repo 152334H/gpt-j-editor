@@ -26,14 +26,14 @@ const ParamConfigs = ({conf, setConf}) => (<>
   <FormControlLabel
     control={
       <Switch checked={conf.csearch} onChange={
-        e => setConf({...conf, top_k: conf.csearch ? 0 : 6, csearch: !conf.csearch})
+        _ => setConf({...conf, top_k: conf.csearch ? 0 : 6, csearch: !conf.csearch})
       }/>
     } label='Enable contrastive search'
   />
   <Box>
     <Config
       label="top_k" value={conf.top_k}
-      min={0} max={10} step={1}
+      min={conf.csearch ? 1 : 0} max={10} step={1}
       onChange={e => setConf({...conf, top_k: +e.target.value})}
     />
     {conf.csearch ? 
