@@ -172,22 +172,68 @@ const TextEditor = ({uid}) => {
   </>)
 }
 
+function attemptRegisterOnce(res,rej) {
+  const ws = new WebSocket(`${WS_URL}/register`)
+  ws.onerror = e => {
+    rej(e)
+  }
+  ws.onclose = e => {
+    // TODO
+    if (e.code === 1012) // server has too many connections
+      res({err: 'There are currently too many users on this site. Waiting for access...'})
+    else if (e.code === 1008) // user already has connection
+      res({err: 'You are already connected to the site elsewhere. If you just refreshed the page, this message should disappear soon.'})
+  }
+  ws.onmessage = e => {
+    if (e.data !== '.')
+      res({msg:e.data, ws})
+  }
+}
+
+async function delayedRegister(delay) {
+  await new Promise(res => setTimeout(res, 1000*delay))
+  return await new Promise(attemptRegisterOnce)
+}
+
 const App = () => {
-  const {lastMessage} = useWebSocket(`${WS_URL}/register`, {
-    protocols: 'text',
-    shouldReconnect: e => {
-      return e.code === 1012
-    },
-    reconnectInterval: 5000,
-    reconnectAttempts: 9999999,
-    retryOnError: true,
-    filter: e => {
-      return e.data !== '.'
-    }
+  const [sess,setSess] = useState({})
+  const [query,setQuery] = useState({
+    delay: 2, err: 'Loading...'
   })
-  return lastMessage ? <TextEditor uid={lastMessage.data}/> : <Typography>
-    There are currently too many users on this site. Waiting for access...
-  </Typography>
+
+  console.log('render')
+
+  useEffect(() => {
+    if (sess.uid !== undefined)
+      return ()=>0
+    delayedRegister(query.delay-2).then(res => {
+      console.log('got', res)
+      if (res.msg)
+        setSess({
+          uid: res.msg, ws: res.ws
+        })
+      else
+        setQuery({
+          delay: (query.delay**1.5)|0,
+          err: res.err
+        })
+      return res
+    }).catch(e => window.alert(e))
+
+  }, [sess, query, setSess, setQuery])
+
+  const disconnect = useCallback(() => {
+    console.log("HEY")
+    sess.ws.close()
+    setQuery({
+      delay: 9999999,
+      err: 'You were disconnected for inactivity. Please refresh the page to rejoin.'
+    })
+    setSess({})
+  }, [sess, setQuery, setSess])
+  
+  return sess.uid ? <TextEditor uid={sess.uid} disconnect={disconnect}/>
+    : <Typography> {query.err} </Typography>
 }
 
 const PhoneUserCheck = () => {
