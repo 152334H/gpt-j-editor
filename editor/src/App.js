@@ -7,6 +7,7 @@ import { createEditor, Range } from 'slate'
 import { Slate, Editable, withReact } from 'slate-react'
 //
 import Box from '@mui/material/Box'
+import Tooltip from '@mui/material/Tooltip'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import ListItem from '@mui/material/ListItem'
@@ -101,9 +102,20 @@ const TextEditor = ({uid}) => {
     />
     <br/>
     <div>
-      <Button variant='contained' onClick={() => saveTxt(localStorage.getItem('content'))}>
-        Export
-      </Button>
+      <Tooltip title='Exports to .txt'>
+        <Button variant='contained' onClick={() => saveTxt(localStorage.getItem('content'))}>
+          Export
+        </Button>
+      </Tooltip>
+      {/*
+      <Tooltip title="Press this if there's grey text is hanging around">
+        <Button variant='outlined' onClick={() =>
+            Editor.fixVoidNodes(editor)
+          }>
+          Fix dangling
+        </Button>
+      </Tooltip>
+      */}
     </div>
     <hr/>
     <Slate
