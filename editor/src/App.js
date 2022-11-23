@@ -1,6 +1,6 @@
 
 // Import React dependencies.
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 // Import the Slate editor factory.
 import { createEditor, Range } from 'slate'
 // Import the Slate components and React plugin.
@@ -14,7 +14,7 @@ import ListItem from '@mui/material/ListItem'
 import List from '@mui/material/List'
 
 //
-import useWebSocket from 'react-use-websocket';
+import { useMediaQuery } from 'react-responsive'
 import { saveAs } from 'file-saver';
 import lodash from 'lodash'
 //
@@ -62,24 +62,34 @@ const Preamble = ({autopredict}) => {
   </Box>
 }
 
-const TextEditor = ({uid}) => {
+const TextEditor = ({uid, disconnect}) => {
   const [editor] = useState(() => withReact(createEditor()))
   const [autopredict, setAutopredict] = useState({active: true, delay: 1500})
   const [ctx, setCtx] = useState({prior: 200, extend: 100})
   const [conf,setConf] = useState({temp: 0.8, top_p: 0.9, top_k: 6, p_alpha: 0.6, csearch: true})
 
+  const debouncedQuit = useCallback(
+    lodash.debounce(disconnect,900000),
+    [disconnect]
+  )
+  useEffect(() => {
+    debouncedQuit()
+    return () => debouncedQuit.cancel()
+  }, [debouncedQuit]) 
   const renderElem = useCallback(Render.elem, [])
   const renderLeaf = useCallback(Render.leaf, [])
   // Update the initial content to be pulled from Local Storage if it exists.
   const initialValue = useMemo(
-    () =>
-      JSON.parse(localStorage.getItem('content')) || [
+    () => {
+      return JSON.parse(
+        localStorage.getItem('content')
+      ) || [
         {
           type: 'paragraph',
           children: [{ text: 'Once upon a time,' }],
         },
-      ],
-    []
+      ]
+    }, []
   )
 
   const tryRemoveCompletion = () => {
@@ -145,9 +155,10 @@ const TextEditor = ({uid}) => {
         }}
         onKeyUp={tryRemoveCompletion}
         onSelect={_ => {
-          console.log(editor.selection)
+          console.log('onselect', editor.selection)
         }}
         onKeyDown={e => {
+          debouncedQuit()
           if (e.key === 'Tab') {
             e.preventDefault();
             Editor.acceptSuggestText(editor)
