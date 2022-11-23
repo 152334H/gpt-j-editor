@@ -1,5 +1,7 @@
 name: gpt-j
 channels:
+  - nvidia
+  - pytorch
   - defaults
 dependencies:
   - python=3.9
