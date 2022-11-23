@@ -72,7 +72,7 @@ async def websocket_endpoint(ws: WebSocket, uid: str):
     try:
         cmd = await ws.receive_text()
         if cmd == 'predict':
-            print(f'got completion request')
+            print('got completion request')
             try:
                 req = CompletionRequest(**await ws.receive_json())
             except ValidationError:

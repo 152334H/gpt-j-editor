@@ -77,7 +77,8 @@ class LM:
             self.model_repo,
             device_map='auto', # low_cpu_mem_usage=True
             # TODO: pick between dtypes
-            torch_dtype='auto', # this will be float16 on default model
+            load_in_8bit=True,
+            #torch_dtype='auto', # this will be float16 on default model
         ).to(self.device)
         self.model.eval()
     def unload(self):
