@@ -77,12 +77,18 @@ async def websocket_endpoint(ws: WebSocket, uid: str):
                 req = CompletionRequest(**await ws.receive_json())
             except ValidationError:
                 raise WebSocketException(1008, 'Invalid request')
+
+            # on empty prompt, do not error, but also do notihng.
+            if not req.prompt:
+                return await ws.close()
+            print(req)
+            
             gen = m.predict_generator(req)
             # this for-loop can be interrupted by the client running ws.close().
             for text in gen:
                 await ws.send_text(text)
+                await asyncio.sleep(req.chunks/4)
                 print(f'sent {text=}')
-                await asyncio.sleep(1)
         else: await ws.send_text("Invalid command: "+cmd)
         await ws.close()
     except (WebSocketDisconnect, ConnectionClosed): pass
