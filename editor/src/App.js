@@ -137,8 +137,11 @@ const TextEditor = ({uid}) => {
         renderLeaf={renderLeaf}
         onPaste={tryRemoveCompletion}
         onClick={() => {
-          tryRemoveCompletion()
-          initCompDebounced()
+          // selection is null on first click!
+          if (editor.selection !== null) {
+            tryRemoveCompletion()
+            initCompDebounced()
+          }
         }}
         onKeyUp={tryRemoveCompletion}
         onSelect={_ => {
