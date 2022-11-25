@@ -68,6 +68,19 @@ const Preamble = ({autopredict}) => {
   </Box>
 }
 
+function loadConf(setAP, setCtx, setConf) {
+  const all = JSON.parse(localStorage.getItem('options'))
+  if (all === null) return
+  setAP(all.AP)
+  setCtx(all.ctx)
+  setConf(all.conf)
+}
+function saveConf(AP,ctx,conf) {
+  localStorage.setItem('options', JSON.stringify({
+    AP, ctx, conf
+  }))
+}
+
 const floatingStyle = {
         margin: 0,
         top: 'auto',
@@ -102,8 +115,15 @@ const TextEditor = ({uid, disconnect}) => {
   const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1224px)' })
 
   useEffect(() => {
+    loadConf(setAutopredict, setCtx, setConf)
+  }, [])
+  useEffect(() => {
     setAutopredict(ap => ({...ap, active:!isTabletOrMobile}))
   }, [isTabletOrMobile])
+  const updater = useMemo(() => setTimeout(() => {
+    console.log('saving conf')
+    saveConf(autopredict, ctx, conf)
+  }), [autopredict, ctx, conf])
 
   const debouncedQuit = useCallback(
     lodash.debounce(disconnect,900000),
