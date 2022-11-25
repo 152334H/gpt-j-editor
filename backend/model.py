@@ -103,7 +103,7 @@ class LM:
         self.model_repo = model_repo
         self.device = device
         #
-        self.tokenizer = AutoTokenizer.from_pretrained(model_repo)
+        self.tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6B") # FIXME
         FINAL_TOKENS[:] = list(self.tokenizer(FINAL_STRING).input_ids)
         if preload: self.load()
 
@@ -132,16 +132,27 @@ class LM:
             input_ids,
             **params
         )
+        assert isinstance(gen, Generator)
+        '''
         if isinstance(gen, torch.Tensor):
             gen = (t for t in gen[0,len(input_ids):,None])
 
         # yield token groups
-        for token_group in group(gen, req.chunks, self.tokenizer): # pyright: ignore
-            merged = torch.cat(token_group)
-            s = self.tokenizer.decode(merged)
-            if (idx := s.find(FINAL_STRING)) != -1:
-                s = s[:idx]
-            yield s, merged.size()[0]
+        group_gen = group(gen, req.chunks, self.tokenizer)
+        try:
+            for token_group in group_gen: # pyright: ignore
+                merged = torch.cat(token_group)
+                s = self.tokenizer.decode(merged)
+                if (idx := s.find(FINAL_STRING)) != -1:
+                    s = s[:idx]
+                yield s, merged.size()[0]
+        except GeneratorExit:
+            print('Predict interrupted!', flush=True)
+            group_gen.close()
+            gen.close()
+            del group_gen
+            del gen
+            del input_ids
 
 
 class Dummy:
