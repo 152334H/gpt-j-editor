@@ -212,9 +212,14 @@ const Editor = {
       { at: state.endPos }
     )
     // remerge
-    Transforms.mergeNodes(editor, { at: [state.endPos.path[0]+1] })
-    Transforms.select(editor, newPos)
-    Transforms.mergeNodes(editor, { at: [state.endPos.path[0]+nodes.length] }) // this one can error. don't really care.
+    try {
+      Transforms.mergeNodes(editor, { at: [state.endPos.path[0]+1] })
+      Transforms.select(editor, newPos)
+      Transforms.mergeNodes(editor, { at: [state.endPos.path[0]+nodes.length] }) // this one can error. don't really care.
+    } catch (e) {
+      console.log('acceptSuggestText() merging error:')
+      console.log(e)
+    }
   }
 }
 export default Editor
