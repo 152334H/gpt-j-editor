@@ -260,7 +260,7 @@ async function delayedRegister(delay) {
 const App = () => {
   const [sess,setSess] = useState({})
   const [query,setQuery] = useState({
-    delay: 2, err: 'Loading...'
+    delay: 3, err: 'Loading...'
   })
 
   console.log('render')
@@ -268,7 +268,7 @@ const App = () => {
   useEffect(() => {
     if (sess.uid !== undefined)
       return ()=>0
-    delayedRegister(query.delay-2).then(res => {
+    delayedRegister(query.delay-3).then(res => {
       console.log('got', res)
       if (res.msg)
         setSess({
