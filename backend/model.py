@@ -136,6 +136,7 @@ class LM:
         '''
         if isinstance(gen, torch.Tensor):
             gen = (t for t in gen[0,len(input_ids):,None])
+        '''
 
         # yield token groups
         group_gen = group(gen, req.chunks, self.tokenizer)
