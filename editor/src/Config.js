@@ -10,6 +10,8 @@ import Box from '@mui/material/Box'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
 
+const MAX_PRIOR = process.env.MAX_PRIOR ?? 500;
+const MAX_EXTEND = process.env.MAX_EXTEND ?? 200;
 
 const Config = ({label,value,min,max,step,onChange}) => (<>
   <Typography>
@@ -60,12 +62,12 @@ const ParamConfigs = ({conf, setConf}) => (<>
 const CtxConfigs = ({ctx, setCtx}) => (<Box>
   <Config
     label="Context (max chars in prompt)" value={ctx.prior}
-    min={50} max={500} step={25}
+    min={50} max={MAX_PRIOR} step={25}
     onChange={e => setCtx({...ctx, prior: +e.target.value})}
   />
   <Config
     label="Extend by (max tokens produced)" value={ctx.extend}
-    min={20} max={200} step={5}
+    min={20} max={MAX_EXTEND} step={5}
     onChange={e => setCtx({...ctx, extend: +e.target.value})}
   />
 </Box>)
